@@ -4,14 +4,21 @@ This program is modified by Chang-Yu Huang from PLCW.py, written by Mr.Tsai.
 The purpose of this modification is to add comments, refine codes and standardize the passing of parameters.
 '''
 
-import os, csv, pandas as pd, time
+import os, csv, pandas as pd, time, serial, ctypes, sys
 import modbus_tk.defines as cst
 import modbus_tk.modbus_tcp as modbus_tcp
+from modbus_tk import modbus_rtu
 from datetime import datetime
 from os.path import dirname, join
 
 LENGTH_OF_A_BATCH = 40 
 '''Number of records read in a batch.'''
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
 
 def get_time_info():
     '''
@@ -32,7 +39,7 @@ def get_time_info():
     ]
 
 LENGTH_OF_TIME_INFO = len(get_time_info())
-NAME_OF_SCALES = []
+NAME_OF_SCALES = [2, 3]
 '''Modbus id of scales'''
 
 def set_file(name_of_scales: list):
@@ -157,24 +164,33 @@ def calculate_filtered_average(input_file_name: str):
         
     print(average_data)
 
-while True:
+if is_admin():
 
-    day = datetime.now().isocalendar()[2]
-    time_hm = datetime.now().strftime("%H,%M")
-    
-    '''
-    判定如果為當週第一天00：00時，執行子程式一，設定CSV檔及寫入錶頭
-    Create new csv files.
-    '''
-    if time_hm =='00,00' and day==1:
-        set_file()
-    
-    master_w = modbus_tcp.TcpMaster("192.168.100.94",6002)
+    # 使用Modbus TCP
+    #master_w = modbus_tcp.TcpMaster("192.168.100.94",6002)
+
+    # 使用Modbus RTU
+    master_w = modbus_rtu.RtuMaster(serial.Serial(port="com2", baudrate=38400, bytesize=8, parity='N', stopbits=1))
     master_w.set_timeout(5.0)
     master_w.set_verbose(True)
-    for i in range(40):
-        read_data(master_w,NAME_OF_SCALES)
-        time.sleep(0.2)
-    weight_filter()
-    calculate_filtered_average()
-    time.sleep(60)
+
+    while True:
+
+        day = datetime.now().isocalendar()[2]
+        time_hm = datetime.now().strftime("%H,%M")
+        
+        '''
+        判定如果為當週第一天00：00時，執行子程式一，設定CSV檔及寫入錶頭
+        Create new csv files.
+        '''
+        if time_hm =='00,00' and day==1:
+            set_file()
+
+        for i in range(40):
+            read_data(master_w,NAME_OF_SCALES)
+            time.sleep(0.2)
+        weight_filter()
+        calculate_filtered_average()
+        time.sleep(60)
+else:
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
