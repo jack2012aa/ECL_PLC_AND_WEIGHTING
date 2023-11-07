@@ -76,6 +76,7 @@ def set_file(name_of_scales: list):
     for file in files:
         with open(file, 'a', newline = '') as output:
           writer = csv.writer(output,delimiter=',',lineterminator='\n')
+          writer.writerow(header)
 
 def read_data(master: modbus_tcp.TcpMaster, scales: list):
     '''
@@ -91,7 +92,7 @@ def read_data(master: modbus_tcp.TcpMaster, scales: list):
 
     '''Read from each scale.'''
     for scale in scales:
-        weight = master.execute(scale, cst.READ_HOLDING_REGISTERS,0,2)
+        weight = master.execute(scale, cst.READ_HOLDING_REGISTERS,0,2)[0]
         '''
         判定數值是否為負值，以45000為臨界值。大於45000即為負值。
         因為錶頭顯示進位關係，可呈現最大值為65536，負值即為65536-X。
@@ -122,7 +123,7 @@ def weight_filter():
     '''
     
     now = datetime.now()
-    raw_data = pd.read_csv(join(dirname(__file__), str(now.year) + "_" + str(now.isocalendar()[1] + '_' + 'feed_weight_raw_data_log.csv')))[-LENGTH_OF_A_BATCH:]
+    raw_data = pd.read_csv(join(dirname(__file__), str(now.year) + "_" + str(now.isocalendar()[1] + '_' + 'feed_weight_raw_data_log.csv')), header=None)[-LENGTH_OF_A_BATCH:]
     std = raw_data.std(axis = 0)
     average = raw_data.mean()
 
@@ -133,18 +134,19 @@ def weight_filter():
             raw_data.iat[i,j] = max(raw_data.iat[i,j],average[j] - std[j])
 
     now = datetime.now()
-    output_file = os.path.join(os.path.dirname(__file__),str(now.year) + '_' + str(now.isocalendar()[1] + '_' + 'feed_weight_calculated_filter.csv'))
+    output_file = os.path.join(os.path.dirname(__file__),str(now.year) + '_' + str(now.isocalendar()[1]) + '_' + 'feed_weight_calculated_filter.csv')
     raw_data.to_csv(output_file,index = False)
 
     print(raw_data)
 
-def calculate_filtered_average(input_file_name: str):
+def calculate_filtered_average():
     '''
     計算篩選後的一批資料的平均值
     Calculate the average of filtered data.
     '''
 
-    dataframe = pd.read_csv(input_file_name)[-LENGTH_OF_A_BATCH:]
+    now = datetime.now()
+    dataframe = pd.read_csv(os.path.join(os.path.dirname(__file__),str(now.year) + '_' + str(now.isocalendar()[1]) + '_' + 'feed_weight_calculated_filter.csv'),header=None)[-LENGTH_OF_A_BATCH:]
 
     '''Insert time.'''
     average_data = []
@@ -164,33 +166,30 @@ def calculate_filtered_average(input_file_name: str):
         
     print(average_data)
 
-if is_admin():
 
-    # 使用Modbus TCP
-    #master_w = modbus_tcp.TcpMaster("192.168.100.94",6002)
+# 使用Modbus TCP
+#master_w = modbus_tcp.TcpMaster("192.168.100.94",6002)
 
-    # 使用Modbus RTU
-    master_w = modbus_rtu.RtuMaster(serial.Serial(port="com2", baudrate=38400, bytesize=8, parity='N', stopbits=1))
-    master_w.set_timeout(5.0)
-    master_w.set_verbose(True)
+# 使用Modbus RTU
+master_w = modbus_rtu.RtuMaster(serial.Serial(port="com2", baudrate=38400, bytesize=8, parity='N', stopbits=1))
+master_w.set_timeout(5.0)
+master_w.set_verbose(True)
 
-    while True:
+while True:
 
-        day = datetime.now().isocalendar()[2]
-        time_hm = datetime.now().strftime("%H,%M")
-        
-        '''
-        判定如果為當週第一天00：00時，執行子程式一，設定CSV檔及寫入錶頭
-        Create new csv files.
-        '''
-        if time_hm =='00,00' and day==1:
-            set_file()
+    day = datetime.now().isocalendar()[2]
+    time_hm = datetime.now().strftime("%H,%M")
+    
+    '''
+    判定如果為當週第一天00：00時，執行子程式一，設定CSV檔及寫入錶頭
+    Create new csv files.
+    '''
+    if time_hm =='00,00' and day==1:
+        set_file()
 
-        for i in range(40):
-            read_data(master_w,NAME_OF_SCALES)
-            time.sleep(0.2)
-        weight_filter()
-        calculate_filtered_average()
-        time.sleep(60)
-else:
-    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    for i in range(40):
+        read_data(master_w,NAME_OF_SCALES)
+        time.sleep(0.2)
+    weight_filter()
+    calculate_filtered_average()
+    time.sleep(60)
