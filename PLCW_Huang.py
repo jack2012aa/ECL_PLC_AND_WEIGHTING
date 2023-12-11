@@ -42,6 +42,31 @@ LENGTH_OF_TIME_INFO = len(get_time_info())
 NAME_OF_SCALES = [2, 3]
 '''Modbus id of scales'''
 
+def exist_file():
+    '''
+    查看是否已經存在這週的檔案
+    Check whether csv of this week is exist.
+    '''''
+
+    dt = datetime.now()        
+    wk = dt.isocalendar()[1]     
+    yr = dt.isocalendar()[0]
+
+    files = [
+        os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "feed_weight_raw_data_log.csv"),
+        os.path.join(os.path.dirname(__file__), str(yr)+"_"+ str(wk) + "_"+"feed_weight_calculated_filter.csv"),
+        os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "feed_weight_calculated.csv"),
+        os.path.join(os.path.dirname(__file__), str(yr)+"_"+str(wk)+"_"+"feed_weight_calculated_avg_hr.csv")
+    ]
+
+    result = True
+
+    for file in files:
+        result = result and os.path.isfile(file)
+
+    return result
+
+
 def set_file(name_of_scales: list):
     '''
     新建當週的csv檔並加入表頭。會有三個csv檔。
@@ -119,7 +144,7 @@ def read_data(master: modbus_tcp.TcpMaster, scales: list):
 def weight_filter():
     '''
     為了降低豬對飼料秤晃動造成的影響，過濾超過上下限的數值，上下限為正負一個標準差，超過上下限的改為上下限值
-    To minimize the effect of pigs on records, group every length_of_a_batch records and calibrate values out of one standard deviation.
+    To minimize the effect of pigs on records, group every length_of_a_batch records and calibrate values out of one standard devilocion.
     '''
     
     now = datetime.now()
@@ -130,8 +155,8 @@ def weight_filter():
     for i in range(LENGTH_OF_A_BATCH):
         n_of_column = raw_data.shape[1]
         for j in range(LENGTH_OF_TIME_INFO,n_of_column):
-            raw_data.iat[i,j] = min(raw_data.iat[i,j],average[j] + std[j])
-            raw_data.iat[i,j] = max(raw_data.iat[i,j],average[j] - std[j])
+            raw_data.iloc[i,j] = min(raw_data.iloc[i,j],average[j] + std[j])
+            raw_data.iloc[i,j] = max(raw_data.iloc[i,j],average[j] - std[j])
 
     now = datetime.now()
     output_file = os.path.join(os.path.dirname(__file__),str(now.year) + '_' + str(now.isocalendar()[1]) + '_' + 'feed_weight_calculated_filter.csv')
@@ -151,7 +176,7 @@ def calculate_filtered_average():
     '''Insert time.'''
     average_data = []
     for i in range(LENGTH_OF_TIME_INFO):
-        average_data.append(dataframe.iat[0,i])
+        average_data.append(dataframe.iloc[0,i])
     
     '''Insert average.'''
     mean = dataframe.mean()
@@ -181,10 +206,10 @@ while True:
     time_hm = datetime.now().strftime("%H,%M")
     
     '''
-    判定如果為當週第一天00：00時，執行子程式一，設定CSV檔及寫入錶頭
+    如果這週的檔案還沒被建立，設定CSV檔及寫入錶頭
     Create new csv files.
     '''
-    if time_hm =='00,00' and day==1:
+    if not exist_file():
         set_file()
 
     for i in range(40):

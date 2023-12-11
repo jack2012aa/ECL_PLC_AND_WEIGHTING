@@ -225,89 +225,89 @@ def weight_filter():
  while True:
      n=0
               
-     if df_nw.iat[0,7] > stw_l1:
-      df_nw.iat[0,7]=stw_l2
-     elif df_nw.iat[0,7] <stw_l11:
-      df_nw.iat[0,7]=stw_l11
+     if df_nw.iloc[0,7] > stw_l1:
+      df_nw.iloc[0,7]=stw_l2
+     elif df_nw.iloc[0,7] <stw_l11:
+      df_nw.iloc[0,7]=stw_l11
      else:
          pass
          
-     if df_nw.iat[0,8] > stw_l2:
-      df_nw.iat[0,8]= stw_l2
-     elif df_nw.iat[0,8] <stw_l21:
-      df_nw.iat[0,8]=stw_l21
+     if df_nw.iloc[0,8] > stw_l2:
+      df_nw.iloc[0,8]= stw_l2
+     elif df_nw.iloc[0,8] <stw_l21:
+      df_nw.iloc[0,8]=stw_l21
      else:
          pass
       
         
-     if df_nw.iat[0,9] > stw_l3:
-      df_nw.iat[0,9]=stw_l3
-     elif df_nw.iat[0,9] <stw_l31:
-      df_nw.iat[0,9]=stw_l31
+     if df_nw.iloc[0,9] > stw_l3:
+      df_nw.iloc[0,9]=stw_l3
+     elif df_nw.iloc[0,9] <stw_l31:
+      df_nw.iloc[0,9]=stw_l31
      else:
          pass
     
       
-     if df_nw.iat[0,10] > stw_l4:
-      df_nw.iat[0,10]=stw_l4
-     elif df_nw.iat[0,10] <stw_l41:
-      df_nw.iat[0,10]=stw_l41
+     if df_nw.iloc[0,10] > stw_l4:
+      df_nw.iloc[0,10]=stw_l4
+     elif df_nw.iloc[0,10] <stw_l41:
+      df_nw.iloc[0,10]=stw_l41
      else:
          pass
       
-     if df_nw.iat[0,11] > stw_l5:
-      df_nw.iat[0,11]=stw_l5
-     elif df_nw.iat[0,11] <stw_l51:
-      df_nw.iat[0,11]=stw_l51
+     if df_nw.iloc[0,11] > stw_l5:
+      df_nw.iloc[0,11]=stw_l5
+     elif df_nw.iloc[0,11] <stw_l51:
+      df_nw.iloc[0,11]=stw_l51
      else:
          pass
     
-     if df_nw.iat[0,12] > stw_l6:
-      df_nw.iat[0,12]=stw_l6
-     elif df_nw.iat[0,12] <stw_l61:
-      df_nw.iat[0,12]=stw_l61
+     if df_nw.iloc[0,12] > stw_l6:
+      df_nw.iloc[0,12]=stw_l6
+     elif df_nw.iloc[0,12] <stw_l61:
+      df_nw.iloc[0,12]=stw_l61
      else:
          pass
       
-     if df_nw.iat[0,13] > stw_h1:
-      df_nw.iat[0,13]=stw_h1
-     elif df_nw.iat[0,13] <stw_h11:
-      df_nw.iat[0,13]=stw_h11
+     if df_nw.iloc[0,13] > stw_h1:
+      df_nw.iloc[0,13]=stw_h1
+     elif df_nw.iloc[0,13] <stw_h11:
+      df_nw.iloc[0,13]=stw_h11
      else:
          pass
       
-     if df_nw.iat[0,14] > stw_h2:
-      df_nw.iat[0,14]=stw_h2
-     elif df_nw.iat[0,14] <stw_h21:
-      df_nw.iat[0,14]=stw_h21
+     if df_nw.iloc[0,14] > stw_h2:
+      df_nw.iloc[0,14]=stw_h2
+     elif df_nw.iloc[0,14] <stw_h21:
+      df_nw.iloc[0,14]=stw_h21
      else:
          pass
       
-     if df_nw.iat[0,15] > stw_h3:
-      df_nw.iat[0,15]=stw_h3
-     elif df_nw.iat[0,15] <stw_h31:
-      df_nw.iat[0,15]=stw_h31
+     if df_nw.iloc[0,15] > stw_h3:
+      df_nw.iloc[0,15]=stw_h3
+     elif df_nw.iloc[0,15] <stw_h31:
+      df_nw.iloc[0,15]=stw_h31
      else:
          pass
       
-     if df_nw.iat[0,16] > stw_h4:
-      df_nw.iat[0,16]=stw_h4
-     elif df_nw.iat[0,16] <stw_h41:
-      df_nw.iat[0,16]=stw_h41
+     if df_nw.iloc[0,16] > stw_h4:
+      df_nw.iloc[0,16]=stw_h4
+     elif df_nw.iloc[0,16] <stw_h41:
+      df_nw.iloc[0,16]=stw_h41
      else:
          pass
       
-     if df_nw.iat[0,17] > stw_h5:
-      df_nw.iat[0,17]=stw_h5
-     elif df_nw.iat[0,17] <stw_h51:
-      df_nw.iat[0,17]=stw_h51
+     if df_nw.iloc[0,17] > stw_h5:
+      df_nw.iloc[0,17]=stw_h5
+     elif df_nw.iloc[0,17] <stw_h51:
+      df_nw.iloc[0,17]=stw_h51
      else:
          pass  
      
-     if df_nw.iat[0,18] > stw_h6:
-      df_nw.iat[0,18]=stw_h6
-     elif df_nw.iat[0,18] <stw_h61:
-      df_nw.iat[0,18]=stw_l11
+     if df_nw.iloc[0,18] > stw_h6:
+      df_nw.iloc[0,18]=stw_h6
+     elif df_nw.iloc[0,18] <stw_h61:
+      df_nw.iloc[0,18]=stw_l11
      else:
          pass
      n=n+1
@@ -332,7 +332,7 @@ def weight_filter():
   
 
 #定義寫入資料內容及排序
-data_nw=[y,m,d,h,mm,s,ss,df_nw.iat[0,7],df_nw.iat[0,8],df_nw.iat[0,9],df_nw.iat[0,10],df_nw.iat[0,11],df_nw.iat[0,12],df_nw.iat[0,13],df_nw.iat[0,14],df_nw.iat[0,15],df_nw.iat[0,16],df_nw.iat[0,17], df_nw.iat[0,18]]
+data_nw=[y,m,d,h,mm,s,ss,df_nw.iloc[0,7],df_nw.iloc[0,8],df_nw.iloc[0,9],df_nw.iloc[0,10],df_nw.iloc[0,11],df_nw.iloc[0,12],df_nw.iloc[0,13],df_nw.iloc[0,14],df_nw.iloc[0,15],df_nw.iloc[0,16],df_nw.iloc[0,17], df_nw.iloc[0,18]]
 #開啟檔案，西元年_週次_feed_weight_calculated_fillter.csv
  outputFilePath4 = os.path.join(os.path.dirname(__file__)
                 ,str(yr)+"_"+str(wk)+"_"+"feed_weight_calculated_fillter.csv")
@@ -412,7 +412,7 @@ def avg_2():
    
   
 #定義寫入資訊內容及排序
-  data_avg2 =[y,m,d,h,mm,s,ss,df_avg_hr[7],df_avg_hr[8],df_avg_hr[9],df_avg_hr[10],df_avg_hr[11],df_avg_hr[12],df_avg_hr[13],df_avg_hr[14],df_avg_hr[15],df_avg_hr[16],df_avg_hr[17],df_avg_hr[18]]
+  data_avg2 =[y,m,d,h,mm,s,ss,df_avg_hr[7],df_avg_hr[8],[9],df_avg_hr[10],df_avg_hr[11],df_avg_hr[12],df_avg_hr[13],df_avg_hr[14],df_avg_hr[15],df_avg_hr[16],df_avg_hr[17],df_avg_hr[18]]
 #開啟CSV檔
   outputFilePath9 = os.path.join(os.path.dirname(__file__),                                 str(yr)+"_"+str(wk)+"_"+"feed_weight_calculated_avg_hr.csv")
 #寫入資料
