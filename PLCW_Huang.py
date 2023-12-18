@@ -13,6 +13,10 @@ from os.path import dirname, join
 
 LENGTH_OF_A_BATCH = 40 
 '''Number of records read in a batch.'''
+DURATION = 0.2
+'''Duration between two records in a batch.'''
+TOS = 9
+'''Time of sleeping'''
 
 def is_admin():
     try:
@@ -42,22 +46,34 @@ LENGTH_OF_TIME_INFO = len(get_time_info())
 NAME_OF_SCALES = [2, 3]
 '''Modbus id of scales'''
 
+def generate_file_name():
+    '''
+    生成這週用的檔案名 \n
+    Generate the name of files used in this week. \n
+    檔案列表 list:
+    * raw_data.csv
+    * std_filtered.csv
+    * std_filtered_1min_average.csv
+    '''
+
+    dt = datetime.now()        
+    wk = dt.isocalendar()[1]     
+    yr = dt.isocalendar()[0]
+
+    files = [os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "raw_data.csv"),
+            os.path.join(os.path.dirname(__file__), str(yr)+"_"+ str(wk) + "_"+"std_filtered.csv"),
+            os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "std_filtered_1min_average.csv"),
+        ]
+    return files
+
+
 def exist_file():
     '''
     查看是否已經存在這週的檔案
     Check whether csv of this week is exist.
     '''''
 
-    dt = datetime.now()        
-    wk = dt.isocalendar()[1]     
-    yr = dt.isocalendar()[0]
-
-    files = [
-        os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "feed_weight_raw_data_log.csv"),
-        os.path.join(os.path.dirname(__file__), str(yr)+"_"+ str(wk) + "_"+"feed_weight_calculated_filter.csv"),
-        os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "feed_weight_calculated.csv"),
-        os.path.join(os.path.dirname(__file__), str(yr)+"_"+str(wk)+"_"+"feed_weight_calculated_avg_hr.csv")
-    ]
+    files = generate_file_name()
 
     result = True
 
@@ -74,29 +90,14 @@ def set_file(name_of_scales: list):
     :param name_of_scales:所有會記錄到的飼料秤的名稱. Names of scales.
     '''
 
-    dt = datetime.now()        
-    wk = dt.isocalendar()[1]     
-    yr = dt.isocalendar()[0]
-
-    '''
-    Create files.
-    _feed_weight_raw_data_log.csv: raw data
-    _feed_weight_calculated_filter.csv: 開啟重量去除標準差分析
-    _feed_weight_calculated.csv: average per minute
-    _feed_weight_calculated_avg_hr.csv: average per half hour
-    '''
-    files = [
-        os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "feed_weight_raw_data_log.csv"),
-        os.path.join(os.path.dirname(__file__), str(yr)+"_"+ str(wk) + "_"+"feed_weight_calculated_filter.csv"),
-        os.path.join(os.path.dirname(__file__),str(yr)+"_"+ str(wk) +"_"+ "feed_weight_calculated.csv"),
-        os.path.join(os.path.dirname(__file__), str(yr)+"_"+str(wk)+"_"+"feed_weight_calculated_avg_hr.csv")
-    ]
+    files = generate_file_name()
 
     '''
     Create headers that are inserted into files.
     '''
     header = ['year','month','day','hour','minute','second','millisecond']
-    header.append(name_of_scales)
+    for scale in name_of_scales:
+        header.append(scale)
 
     for file in files:
         with open(file, 'a', newline = '') as output:
@@ -111,7 +112,6 @@ def read_data(master: modbus_tcp.TcpMaster, scales: list):
     :param scales: 磅秤的modbus編號. Modbus ids of scales.
     '''
 
-    now = datetime.now()
     '''A record that will be inserted into the csv file.'''
     record = get_time_info()
 
@@ -134,58 +134,57 @@ def read_data(master: modbus_tcp.TcpMaster, scales: list):
         record.append(weight)
 
     '''Write into a file.'''
-    output_file = os.path.join(os.path.dirname(__file__),str(now.year)+"_"+ str(now.isocalendar()[1]) +"_"+ "feed_weight_raw_data_log.csv")
-    with open(output_file,'a',newline = '') as output:
+    file = generate_file_name()[0]    
+    with open(file,'a',newline = '') as output:
         writer = csv.writer(output,delimiter=',',lineterminator='\n')
         writer.writerow(record)
     
     print(record)
 
-def weight_filter():
+def std_filter():
     '''
     為了降低豬對飼料秤晃動造成的影響，過濾超過上下限的數值，上下限為正負一個標準差，超過上下限的改為上下限值
     To minimize the effect of pigs on records, group every length_of_a_batch records and calibrate values out of one standard devilocion.
     '''
     
-    now = datetime.now()
-    raw_data = pd.read_csv(join(dirname(__file__), str(now.year) + "_" + str(now.isocalendar()[1] + '_' + 'feed_weight_raw_data_log.csv')), header=None)[-LENGTH_OF_A_BATCH:]
-    std = raw_data.std(axis = 0)
-    average = raw_data.mean()
+    raw_data = pd.read_csv(generate_file_name()[0], on_bad_lines = 'skip')
+    
+    group = raw_data[-LENGTH_OF_A_BATCH:]
+    group = group.astype(float)
+    std = group.std()
+    average = group.mean()
 
-    for i in range(LENGTH_OF_A_BATCH):
-        n_of_column = raw_data.shape[1]
-        for j in range(LENGTH_OF_TIME_INFO,n_of_column):
-            raw_data.iloc[i,j] = min(raw_data.iloc[i,j],average[j] + std[j])
-            raw_data.iloc[i,j] = max(raw_data.iloc[i,j],average[j] - std[j])
+    with open(generate_file_name()[1],'a',newline = '') as output:
+        writer = csv.writer(output,delimiter=',',lineterminator='\n')
+        for i in range(LENGTH_OF_A_BATCH):
+            for j in range(LENGTH_OF_TIME_INFO, raw_data.shape[1]):
+                group.iloc[i,j] = min(group.iloc[i,j],average[j] + std[j])
+                group.iloc[i,j] = max(group.iloc[i,j],average[j] - std[j])
+            writer.writerow(group.iloc[i])
 
-    now = datetime.now()
-    output_file = os.path.join(os.path.dirname(__file__),str(now.year) + '_' + str(now.isocalendar()[1]) + '_' + 'feed_weight_calculated_filter.csv')
-    raw_data.to_csv(output_file,index = False)
+    print(group)
 
-    print(raw_data)
-
-def calculate_filtered_average():
+def one_min_average():
     '''
     計算篩選後的一批資料的平均值
     Calculate the average of filtered data.
     '''
 
     now = datetime.now()
-    dataframe = pd.read_csv(os.path.join(os.path.dirname(__file__),str(now.year) + '_' + str(now.isocalendar()[1]) + '_' + 'feed_weight_calculated_filter.csv'),header=None)[-LENGTH_OF_A_BATCH:]
+    df = pd.read_csv(generate_file_name()[1], on_bad_lines = 'skip')[-LENGTH_OF_A_BATCH:]
 
     '''Insert time.'''
     average_data = []
     for i in range(LENGTH_OF_TIME_INFO):
-        average_data.append(dataframe.iloc[0,i])
+        average_data.append(df.iloc[0,i])
     
     '''Insert average.'''
-    mean = dataframe.mean()
-    for i in range(LENGTH_OF_TIME_INFO,dataframe.shape[1]):
+    mean = df.mean()
+    for i in range(LENGTH_OF_TIME_INFO,df.shape[1]):
         average_data.append(mean[i])
 
     '''Write into csv.'''
-    output_file = os.path.join(os.path.dirname(__file__), str(datetime.now().year)+"_"+str(datetime.now().isocalendar()[1])+"_"+"feed_weight_calculated.csv")
-    with open(output_file,'a',newline = '') as output:
+    with open(generate_file_name()[2],'a',newline = '') as output:
         writer = csv.writer(output,delimiter=',',lineterminator='\n')
         writer.writerow(average_data)
         
@@ -202,19 +201,16 @@ master_w.set_verbose(True)
 
 while True:
 
-    day = datetime.now().isocalendar()[2]
-    time_hm = datetime.now().strftime("%H,%M")
-    
     '''
     如果這週的檔案還沒被建立，設定CSV檔及寫入錶頭
     Create new csv files.
     '''
     if not exist_file():
-        set_file()
+        set_file(NAME_OF_SCALES)
 
-    for i in range(40):
+    for i in range(LENGTH_OF_A_BATCH):
         read_data(master_w,NAME_OF_SCALES)
-        time.sleep(0.2)
-    weight_filter()
-    calculate_filtered_average()
-    time.sleep(60)
+        time.sleep(DURATION)
+    std_filter()
+    one_min_average()
+    time.sleep(TOS)
